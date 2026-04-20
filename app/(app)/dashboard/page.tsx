@@ -87,7 +87,8 @@ export default async function DashboardPage() {
       ) : (
         <div className="space-y-3">
           {emails.map((email) => (
-            <Card key={email.id}>
+            <Link key={email.id} href={`/emails/${email.id}`} className="block">
+            <Card className="hover:border-foreground/20 transition-colors cursor-pointer">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between gap-3">
                   <CardTitle className="text-sm font-medium leading-snug">
@@ -121,6 +122,7 @@ export default async function DashboardPage() {
                 </p>
               </CardContent>
             </Card>
+            </Link>
           ))}
         </div>
       )}
