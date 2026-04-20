@@ -8,6 +8,13 @@
       "when": 1776682371570,
       "tag": "0000_wet_gambit",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1776685147381,
+      "tag": "0001_aromatic_tarot",
+      "breakpoints": true
     }
   ]
 }

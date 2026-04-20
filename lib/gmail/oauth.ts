@@ -36,7 +36,11 @@ export function getGmailAuthUrl(state: string): string {
   return oauth2Client.generateAuthUrl({
     access_type: "offline",
     prompt: "consent",
-    scope: ["https://www.googleapis.com/auth/gmail.send"],
+    scope: [
+      "openid",
+      "email",
+      "https://www.googleapis.com/auth/gmail.send",
+    ],
     state,
   })
 }

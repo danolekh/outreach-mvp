@@ -56,6 +56,7 @@ export const gmailConnections = pgTable("gmail_connections", {
   id: text("id").primaryKey(),
   userId: text("user_id")
     .notNull()
+    .unique()
     .references(() => users.id, { onDelete: "cascade" }),
   gmailEmail: text("gmail_email").notNull(),
   accessToken: text("access_token").notNull(),

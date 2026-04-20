@@ -4,7 +4,6 @@ import { createOAuth2Client, encrypt } from "@/lib/gmail/oauth";
 import { db } from "@/lib/db";
 import { gmailConnections } from "@/lib/db/schema";
 import { nanoid } from "nanoid";
-import { google } from "googleapis";
 
 export async function GET(req: NextRequest) {
   const session = await auth.api.getSession({ headers: req.headers });
@@ -33,11 +32,13 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    oauth2Client.setCredentials(tokens);
-    const oauth2 = google.oauth2({ version: "v2", auth: oauth2Client });
-    const { data: userInfo } = await oauth2.userinfo.get();
+    // Extract email from the ID token payload — no extra scope needed
+    const idTokenPayload = tokens.id_token
+      ? JSON.parse(Buffer.from(tokens.id_token.split(".")[1], "base64url").toString())
+      : null
+    const gmailEmail: string | undefined = idTokenPayload?.email ?? session.user.email
 
-    if (!userInfo.email) {
+    if (!gmailEmail) {
       return NextResponse.redirect(
         new URL("/connect-gmail?error=no_email", req.url),
       );
@@ -52,7 +53,7 @@ export async function GET(req: NextRequest) {
       .values({
         id: nanoid(),
         userId: session.user.id,
-        gmailEmail: userInfo.email,
+        gmailEmail,
         accessToken: encrypt(tokens.access_token),
         refreshToken: encrypt(tokens.refresh_token),
         tokenExpiresAt: expiresAt,
@@ -61,7 +62,7 @@ export async function GET(req: NextRequest) {
       .onConflictDoUpdate({
         target: gmailConnections.userId,
         set: {
-          gmailEmail: userInfo.email,
+          gmailEmail,
           accessToken: encrypt(tokens.access_token),
           refreshToken: encrypt(tokens.refresh_token),
           tokenExpiresAt: expiresAt,
@@ -74,9 +75,11 @@ export async function GET(req: NextRequest) {
     );
     response.cookies.delete("gmail_oauth_state");
     return response;
-  } catch {
+  } catch (err) {
+    console.error("[gmail/callback] error:", err)
+    const msg = err instanceof Error ? encodeURIComponent(err.message) : "unknown"
     return NextResponse.redirect(
-      new URL("/connect-gmail?error=exchange_failed", req.url),
+      new URL(`/connect-gmail?error=exchange_failed&detail=${msg}`, req.url),
     );
   }
 }
